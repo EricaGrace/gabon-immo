@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\PropertyController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -40,3 +41,6 @@ Route::middleware([
         return view('client.dashboard');
     })->name('client.dashboard');
 });
+
+Route::resource('properties', PropertyController::class)->middleware(['auth', 'verified']);
+

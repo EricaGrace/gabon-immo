@@ -8,14 +8,33 @@
                     <a href="{{ route('dashboard') }}">
                         <x-application-mark class="block h-9 w-auto" />
                     </a>
-                </div>
-
+            </div>
                 <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
+                @auth
+                {{-- Owner --}}
+                @if(Auth::user()->role === 'owner')
+                    <x-responsive-nav-link href="{{ route('owner.dashboard') }}" :active="request()->routeIs('owner.dashboard')">
                         {{ __('Dashboard') }}
-                    </x-nav-link>
-                </div>
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link href="{{ route('properties.index') }}" :active="request()->routeIs('properties.*')">
+                        {{ __('Mes biens') }}
+                    </x-responsive-nav-link>
+                @endif
+
+                {{-- Admin --}}
+                @if(Auth::user()->role === 'admin')
+                    <x-responsive-nav-link href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.dashboard')">
+                        {{ __('Admin') }}
+                    </x-responsive-nav-link>
+                @endif
+
+                {{-- Client --}}
+                @if(Auth::user()->role === 'client')
+                    <x-responsive-nav-link href="{{ route('client.dashboard') }}" :active="request()->routeIs('client.dashboard')">
+                        {{ __('Dashboard') }}
+                    </x-responsive-nav-link>
+                @endif
+                @endauth
             </div>
 
             <div class="hidden sm:flex sm:items-center sm:ms-6">
