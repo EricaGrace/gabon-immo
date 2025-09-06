@@ -15,8 +15,78 @@ class PropertyController extends Controller
      */
     public function index()
     {
-        $properties = Property::where('user_id', Auth::id())->with('images')->get();
-        return view('properties.index', compact('properties'));
+    $q = Property::where('user_id', Auth::id())
+        ->with('images')
+        ->latest();
+
+    if ($search = request('q')) {
+        $q->where(function($qq) use ($search){
+            $qq->where('title', 'like', "%{$search}%")
+               ->orWhere('city', 'like', "%{$search}%")
+               ->orWhere('type', 'like', "%{$search}%");
+        });
+    }
+
+    if ($status = request('status')) {
+        $q->where('status', $status);
+    }
+
+    // 👇 la clé : renvoyer un paginator (LengthAwarePaginator)
+    $properties = $q->paginate(12)->withQueryString();
+
+    return view('properties.index', compact('properties'));
+    }
+
+    public function list(Request $request)
+    {
+        // Filtres
+        $q         = $request->string('q')->toString();
+        $city      = $request->string('city')->toString();
+        $district  = $request->string('district')->toString();
+
+        // Options des selects
+        $cities = Property::where('status','published')
+            ->whereNotNull('city')
+            ->select('city')->distinct()->orderBy('city')->pluck('city');
+
+        $districts = collect();
+        if ($city) {
+            $districts = Property::where('status','published')
+                ->where('city', $city)
+                ->whereNotNull('district')
+                ->select('district')->distinct()->orderBy('district')->pluck('district');
+        }
+
+        // Requête principale
+        $query = Property::where('status','published')
+            ->with('images')
+            ->orderBy('created_at','desc');
+
+        if ($q) {
+            $query->where(function($qq) use ($q) {
+                $qq->where('title','like',"%{$q}%")
+                   ->orWhere('city','like',"%{$q}%")
+                   ->orWhere('district','like',"%{$q}%")
+                   ->orWhere('type','like',"%{$q}%");
+            });
+        }
+        if ($city) {
+            $query->where('city', $city);
+        }
+        if ($district) {
+            $query->where('district', $district);
+        }
+
+        $properties = $query->paginate(12)->withQueryString(); // paginator => links() OK
+
+        return view('welcome',[
+            'properties' =>$properties,
+            'cities' => $cities,
+            'districts' => $districts,
+            'city' => $city,
+            'district'=> $district,
+            'q' => $q,
+        ]);
     }
 
     /**
@@ -136,4 +206,21 @@ class PropertyController extends Controller
 
         return redirect()->route('properties.index')->with('success', 'Propriété supprimée');
     }
+
+    public function publish(Property $property) {
+        $this->authorize('update', $property);
+        $property->update(['status' => 'published']);
+        return back()->with('success','Annonce publiée');
+    }
+    public function unpublish(Property $property) {
+        $this->authorize('update', $property);
+        $property->update(['status' => 'draft']);
+        return back()->with('success','Annonce passée en brouillon');
+    }
+    public function archive(Property $property) {
+        $this->authorize('update', $property);
+        $property->update(['status' => 'archived']);
+        return back()->with('success','Annonce archivée');
+    }
+
 }

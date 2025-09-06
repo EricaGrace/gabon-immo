@@ -35,5 +35,14 @@ class Property extends Model
     {
         return $this->hasOne(PropertyImage::class)->where('is_cover', true);
     }
+
+    public function scopePublished($q) {
+        return $q->where('status', 'published');
+    }
+
+    public function scopeMine($q){ 
+        return $q->where('user_id', auth()->id()); 
+    }
+
     
 }

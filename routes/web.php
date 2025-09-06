@@ -4,9 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\PropertyController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [PropertyController::class, 'list'])->name('home');
 
 Route::middleware([
     'auth:sanctum',
@@ -40,6 +38,11 @@ Route::middleware([
     Route::get('/client/dashboard', function () {
         return view('client.dashboard');
     })->name('client.dashboard');
+   
+    Route::patch('properties/{property}/publish',   [\App\Http\Controllers\PropertyController::class,'publish'])->name('properties.publish');
+    Route::patch('properties/{property}/unpublish', [\App\Http\Controllers\PropertyController::class,'unpublish'])->name('properties.unpublish');
+    Route::patch('properties/{property}/archive',   [\App\Http\Controllers\PropertyController::class,'archive'])->name('properties.archive');
+
 });
 
 Route::resource('properties', PropertyController::class)->middleware(['auth', 'verified']);
